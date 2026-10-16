@@ -51,50 +51,86 @@ export function SceneSelectScreen({
               Multi-View Canonical Bootstrapping
             </h2>
             <p className="mt-1 max-w-2xl text-xs text-stone">
-              To eliminate single-angle facial distortion, our Visual RAG engine maps your photograph into 3 distinct canonical 3D perspectives. Each scene dynamically retrieves its dedicated angle and expression embedding.
+              To eliminate single-angle facial distortion and stiff passport poses, our Visual RAG engine maps your photograph into 6 distinct canonical 3D perspectives and natural emotional expressions. Each scene dynamically conditions pose, lighting, and facial geometry.
             </p>
           </div>
           <div className="rounded border border-olive/20 bg-ivory px-3 py-2 text-right">
             <p className="text-[10px] tracking-[0.18em] text-stone uppercase">RAG Vector Bank</p>
-            <p className="text-xs font-semibold text-charcoal">3 Canonical Anchors Ready</p>
+            <p className="text-xs font-semibold text-charcoal">6 Multi-View Anchors Ready</p>
           </div>
         </div>
 
-        {/* 3 Canonical Anchors Grid */}
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+        {/* 6 Canonical Anchors Grid */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
             <div className="flex items-center justify-between">
               <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 01</span>
-              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">30° Regal</span>
             </div>
-            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">3/4 Regal Palace Anchor</h3>
-            <p className="mt-1 text-[11px] text-stone">30° Stately Perspective · Royal Jawline Lock</p>
-            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
-              <span className="text-charcoal font-medium">Mapped Scene:</span> Royal Palace Heritage
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Contemplative Stately</h3>
+            <p className="mt-0.5 text-[11px] text-stone">3/4 turned glance · Balustrade lean</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Royal Palace Heritage
             </div>
           </div>
 
-          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
             <div className="flex items-center justify-between">
               <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 02</span>
-              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">Candid Motion</span>
             </div>
-            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">Frontal Vedic Anchor</h3>
-            <p className="mt-1 text-[11px] text-stone">0° Direct Eye Focus · Symmetrical Facial Mesh</p>
-            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
-              <span className="text-charcoal font-medium">Mapped Scene:</span> Grand Vivah Mandap
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Joyful Beach Laugh</h3>
+            <p className="mt-0.5 text-[11px] text-stone">Mid-stride walking · Authentic eye crinkles</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Goa Coastal Mandap
             </div>
           </div>
 
-          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
             <div className="flex items-center justify-between">
               <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 03</span>
-              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">0° Intimate</span>
             </div>
-            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">Candid Sunset Anchor</h3>
-            <p className="mt-1 text-[11px] text-stone">Dynamic Tilt · Joyful Smile Expression Vector</p>
-            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
-              <span className="text-charcoal font-medium">Mapped Scene:</span> Goa Coastal Mandap
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Sacred Namaste Pose</h3>
+            <p className="mt-0.5 text-[11px] text-stone">85mm close-up · Reverent serene smile</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Sacred Agni Vivah
+            </div>
+          </div>
+
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 04</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">High Action</span>
+            </div>
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Baraat Celebration</h3>
+            <p className="mt-0.5 text-[11px] text-stone">Dancing mid-motion · Exuberant joy</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Baraat Euphoria
+            </div>
+          </div>
+
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 05</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">45° Profile</span>
+            </div>
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Sangeet Chiaroscuro</h3>
+            <p className="mt-0.5 text-[11px] text-stone">Over-the-shoulder · Confident smirk</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Sangeet Midnight
+            </div>
+          </div>
+
+          <div className="border border-beige/80 bg-ivory/60 p-3.5 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 06</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">Golden Hour</span>
+            </div>
+            <h3 className="mt-1.5 font-serif text-sm font-medium text-charcoal">Heartfelt Vows</h3>
+            <p className="mt-0.5 text-[11px] text-stone">Hand on chest · Tender romantic gaze</p>
+            <div className="mt-2 border-t border-beige/40 pt-1.5 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Scene:</span> Golden Hour Vows
             </div>
           </div>
         </div>
@@ -216,7 +252,7 @@ export function SceneSelectScreen({
           {busy ? 'Starting…' : 'Generate portraits'}
         </button>
         <p className="text-xs text-stone">
-          All three scenes are selected by default. Deselect any you don't need.
+          All 6 cinematic scenes are selected by default. Deselect any you don't need.
         </p>
       </div>
     </section>

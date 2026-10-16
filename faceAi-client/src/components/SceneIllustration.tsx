@@ -36,17 +36,62 @@ export function SceneIllustration({ scene, className }: Props) {
     )
   }
 
+  if (scene === 'traditional_indian') {
+    return (
+      <svg viewBox="0 0 120 80" fill="none" className={className} aria-hidden="true">
+        <path d="M60 12v56" stroke={stroke} strokeWidth="1" />
+        <path d="M60 20c-8-10-22-12-30-8 2 10 12 18 30 16" stroke={stroke} strokeWidth="1" />
+        <path d="M60 20c8-10 22-12 30-8-2 10-12 18-30 16" stroke={stroke} strokeWidth="1" />
+        <path d="M60 32c-6-8-18-10-24-6 2 8 10 14 24 12" stroke={stroke} strokeWidth="1" />
+        <path d="M60 32c6-8 18-10 24-6-2 8-10 14-24 12" stroke={stroke} strokeWidth="1" />
+        <ellipse cx="60" cy="53" rx="9" ry="11" stroke={stroke} strokeWidth="1" />
+        <path d="M55 49h2.5M62.5 49H65" stroke={stroke} strokeWidth="0.75" />
+        <path d="M26 68c8-4 16-4 24 0M70 68c8-4 16-4 24 0" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="60" cy="53" r="14" stroke={stroke} strokeWidth="0.5" strokeDasharray="2 4" />
+      </svg>
+    )
+  }
+
+  if (scene === 'baraat_celebration') {
+    return (
+      <svg viewBox="0 0 120 80" fill="none" className={className} aria-hidden="true">
+        <ellipse cx="60" cy="42" rx="22" ry="16" stroke={stroke} strokeWidth="1" />
+        <path d="M38 42c0-8 10-14 22-14s22 6 22 14" stroke={stroke} strokeWidth="1" />
+        <path d="M44 32l32 20M44 52l32-20" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="28" cy="20" r="3" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="92" cy="18" r="2.5" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="60" cy="14" r="3.5" stroke={stroke} strokeWidth="0.75" />
+        <path d="M22 66l12-12M98 66l-12-12" stroke={stroke} strokeWidth="1" />
+        <path d="M12 40c4-4 8 0 12-4M96 36c4-4 8 0 12-4" stroke={stroke} strokeWidth="0.75" />
+      </svg>
+    )
+  }
+
+  if (scene === 'sangeet_glamour') {
+    return (
+      <svg viewBox="0 0 120 80" fill="none" className={className} aria-hidden="true">
+        <path d="M60 8v16M48 24h24M38 34l22-10 22 10" stroke={stroke} strokeWidth="1" />
+        <circle cx="60" cy="38" r="5" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="44" cy="46" r="3" stroke={stroke} strokeWidth="0.75" />
+        <circle cx="76" cy="46" r="3" stroke={stroke} strokeWidth="0.75" />
+        <path d="M44 49v10M76 49v10M60 43v22" stroke={stroke} strokeWidth="0.75" />
+        <path d="M30 68h60" stroke={stroke} strokeWidth="1" />
+        <path d="M22 28l4 4M98 28l-4 4M20 54l5-2M100 54l-5-2" stroke={stroke} strokeWidth="0.75" />
+      </svg>
+    )
+  }
+
+  // romantic_vows
   return (
     <svg viewBox="0 0 120 80" fill="none" className={className} aria-hidden="true">
-      <path d="M60 12v56" stroke={stroke} strokeWidth="1" />
-      <path d="M60 20c-8-10-22-12-30-8 2 10 12 18 30 16" stroke={stroke} strokeWidth="1" />
-      <path d="M60 20c8-10 22-12 30-8-2 10-12 18-30 16" stroke={stroke} strokeWidth="1" />
-      <path d="M60 32c-6-8-18-10-24-6 2 8 10 14 24 12" stroke={stroke} strokeWidth="1" />
-      <path d="M60 32c6-8 18-10 24-6-2 8-10 14-24 12" stroke={stroke} strokeWidth="1" />
-      <ellipse cx="60" cy="53" rx="9" ry="11" stroke={stroke} strokeWidth="1" />
-      <path d="M55 49h2.5M62.5 49H65" stroke={stroke} strokeWidth="0.75" />
-      <path d="M26 68c8-4 16-4 24 0M70 68c8-4 16-4 24 0" stroke={stroke} strokeWidth="0.75" />
-      <circle cx="60" cy="53" r="14" stroke={stroke} strokeWidth="0.5" strokeDasharray="2 4" />
+      <path d="M24 68V34c0-14 16-24 36-24s36 10 36 24v34" stroke={stroke} strokeWidth="1" />
+      <path d="M24 68h72" stroke={stroke} strokeWidth="1" />
+      <circle cx="52" cy="46" r="12" stroke={stroke} strokeWidth="1" />
+      <circle cx="68" cy="46" r="12" stroke={stroke} strokeWidth="1" />
+      <path d="M60 38c3-4 8-4 10 0" stroke={stroke} strokeWidth="0.75" />
+      <circle cx="36" cy="24" r="3" stroke={stroke} strokeWidth="0.5" />
+      <circle cx="84" cy="24" r="3" stroke={stroke} strokeWidth="0.5" />
+      <circle cx="60" cy="14" r="3" stroke={stroke} strokeWidth="0.5" />
     </svg>
   )
 }

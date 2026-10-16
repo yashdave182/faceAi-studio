@@ -1,4 +1,10 @@
-export type SceneKey = 'luxury_cinematic' | 'beach_destination' | 'traditional_indian'
+export type SceneKey =
+  | 'luxury_cinematic'
+  | 'beach_destination'
+  | 'traditional_indian'
+  | 'baraat_celebration'
+  | 'sangeet_glamour'
+  | 'romantic_vows'
 
 export type AttireStyle = 'groom' | 'bride'
 
@@ -58,26 +64,50 @@ export const SCENES: SceneDefinition[] = [
   {
     key: 'luxury_cinematic',
     name: 'Royal Palace Heritage',
-    tagline: 'The Royal Palace',
-    description: 'Grand heritage palace courtyard, sandstone jharokhas, warm chandeliers & royal diyas.',
-    ragBadge: 'Visual RAG · 3/4 Regal Anchor',
+    tagline: 'The Royal Balcony',
+    description: '3/4 contemplative glance from a carved marble palace balcony at golden sunset.',
+    ragBadge: 'Visual RAG · 3/4 Regal Balcony',
     ragAngle: '30° Stately Perspective',
   },
   {
     key: 'beach_destination',
-    name: 'Goa Coastal Mandap',
-    tagline: 'The Sunset Mandap',
-    description: 'Scenic beachside sunset, fresh mogra & marigold mandap, elegant coastal festive attire.',
-    ragBadge: 'Visual RAG · Candid Sunset Anchor',
+    name: 'Goa Coastal Shoreline',
+    tagline: 'The Candid Laugh',
+    description: 'Walking casually along the ocean surf, candid radiant laughter in golden twilight.',
+    ragBadge: 'Visual RAG · Candid Shoreline Laugh',
     ragAngle: 'Dynamic Tilt & Smile',
   },
   {
     key: 'traditional_indian',
     name: 'Grand Vivah Mandap',
-    tagline: 'The Sacred Vivah',
-    description: 'Traditional Vedic vivah ceremony, warm havan glow, rich silk & zardozi embroidery.',
-    ragBadge: 'Visual RAG · Frontal Vedic Anchor',
-    ragAngle: '0° Symmetrical Focus',
+    tagline: 'The Sacred Agni',
+    description: 'Intimate close-up with folded hands in Namaste before the glowing havan fire.',
+    ragBadge: 'Visual RAG · Sacred Agni Close-up',
+    ragAngle: 'Intimate 85mm Focus',
+  },
+  {
+    key: 'baraat_celebration',
+    name: 'Baraat Celebration',
+    tagline: 'The Baraat Dance',
+    description: 'Dynamic celebratory action dancing mid-motion under falling crimson rose petals.',
+    ragBadge: 'Visual RAG · Baraat Action Vector',
+    ragAngle: 'Dynamic High-Energy Motion',
+  },
+  {
+    key: 'sangeet_glamour',
+    name: 'Sangeet Night Luxury',
+    tagline: 'The Midnight Sangeet',
+    description: 'Over-the-shoulder confident glance, adjusting luxury watch under moody chandeliers.',
+    ragBadge: 'Visual RAG · Sangeet Editorial Profile',
+    ragAngle: 'Over-the-Shoulder Glance',
+  },
+  {
+    key: 'romantic_vows',
+    name: 'The Golden Hour Vows',
+    tagline: 'The Eternal Vows',
+    description: 'Tender heartfelt gaze with hand on heart before a cascading floral canopy.',
+    ragBadge: 'Visual RAG · Tender Vows Anchor',
+    ragAngle: 'Heartfelt Emotive Gaze',
   },
 ]
 

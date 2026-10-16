@@ -18,7 +18,9 @@ services:
       - key: IMAGE_MODEL_FALLBACK
         value: gemini:gemini-nano-banana-2.1
       - key: FAL_ID_WEIGHT
-        value: "1"
+        value: "0.86"
+      - key: FAL_ENABLE_ENHANCE
+        value: "false"
       # Required keys to set in Render dashboard:
       - key: FAL_KEY
         sync: false
