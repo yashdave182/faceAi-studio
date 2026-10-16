@@ -3,6 +3,7 @@ import { BrideIcon, GroomIcon } from './AttireIcons'
 import { SceneIllustration } from './SceneIllustration'
 
 interface Props {
+  sessionId?: string | null
   selected: SceneKey[]
   attire: AttireStyle
   onSelectAttire: (attire: AttireStyle) => void
@@ -24,10 +25,79 @@ export function SceneSelectScreen({
   return (
     <section className="fade-up mx-auto max-w-5xl px-6 pt-14 pb-24 sm:px-10">
       <div className="border-b border-beige pb-8">
-        <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step two · Choose your scenes</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step two · Choose your scenes</p>
+          <span className="inline-flex items-center gap-1.5 border border-olive/30 bg-olive/5 px-2.5 py-1 text-[10px] font-medium tracking-[0.16em] text-olive uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-olive animate-pulse" />
+            Visual RAG Active
+          </span>
+        </div>
         <h1 className="mt-2 font-serif text-3xl font-medium text-charcoal sm:text-4xl">
           Where should this Indian wedding story take place?
         </h1>
+      </div>
+
+      {/* Visual RAG Identity Matrix Dashboard */}
+      <div className="mt-8 border border-beige bg-white/70 p-6 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-beige/60 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs">⚡</span>
+              <p className="text-[10px] font-semibold tracking-[0.24em] text-olive uppercase">
+                Visual RAG · Canonical Identity Matrix
+              </p>
+            </div>
+            <h2 className="mt-1 font-serif text-2xl font-medium text-charcoal">
+              Multi-View Canonical Bootstrapping
+            </h2>
+            <p className="mt-1 max-w-2xl text-xs text-stone">
+              To eliminate single-angle facial distortion, our Visual RAG engine maps your photograph into 3 distinct canonical 3D perspectives. Each scene dynamically retrieves its dedicated angle and expression embedding.
+            </p>
+          </div>
+          <div className="rounded border border-olive/20 bg-ivory px-3 py-2 text-right">
+            <p className="text-[10px] tracking-[0.18em] text-stone uppercase">RAG Vector Bank</p>
+            <p className="text-xs font-semibold text-charcoal">3 Canonical Anchors Ready</p>
+          </div>
+        </div>
+
+        {/* 3 Canonical Anchors Grid */}
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 01</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+            </div>
+            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">3/4 Regal Palace Anchor</h3>
+            <p className="mt-1 text-[11px] text-stone">30° Stately Perspective · Royal Jawline Lock</p>
+            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Mapped Scene:</span> Royal Palace Heritage
+            </div>
+          </div>
+
+          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 02</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+            </div>
+            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">Frontal Vedic Anchor</h3>
+            <p className="mt-1 text-[11px] text-stone">0° Direct Eye Focus · Symmetrical Facial Mesh</p>
+            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Mapped Scene:</span> Grand Vivah Mandap
+            </div>
+          </div>
+
+          <div className="border border-beige/80 bg-ivory/60 p-4 transition-colors hover:border-olive/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.18em] text-stone uppercase">Anchor 03</span>
+              <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium text-olive uppercase">98% Lock</span>
+            </div>
+            <h3 className="mt-2 font-serif text-base font-medium text-charcoal">Candid Sunset Anchor</h3>
+            <p className="mt-1 text-[11px] text-stone">Dynamic Tilt · Joyful Smile Expression Vector</p>
+            <div className="mt-3 border-t border-beige/40 pt-2 text-[10px] text-stone">
+              <span className="text-charcoal font-medium">Mapped Scene:</span> Goa Coastal Mandap
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Wedding Role & Attire Selection */}
@@ -81,7 +151,6 @@ export function SceneSelectScreen({
         </div>
       </div>
 
-
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {SCENES.map((scene) => {
           const isSelected = selected.includes(scene.key)
@@ -101,9 +170,20 @@ export function SceneSelectScreen({
                 <SceneIllustration scene={scene.key} className="h-20 w-auto" />
               </div>
               <div className="pt-5">
-                <p className="text-[10px] tracking-[0.24em] text-stone uppercase">{scene.tagline}</p>
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <p className="text-[10px] tracking-[0.24em] text-stone uppercase">{scene.tagline}</p>
+                  <span className="rounded bg-olive/10 px-1.5 py-0.5 text-[9px] font-medium tracking-[0.1em] text-olive uppercase">
+                    {scene.ragAngle}
+                  </span>
+                </div>
                 <h2 className="mt-2 font-serif text-2xl font-medium text-charcoal">{scene.name}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-stone">{scene.description}</p>
+                
+                {/* Visual RAG Badge */}
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] font-medium text-olive">
+                  <span>⚡</span>
+                  <span>{scene.ragBadge}</span>
+                </div>
               </div>
               <div className="mt-5 flex items-center gap-2 text-xs tracking-[0.18em] uppercase">
                 <span

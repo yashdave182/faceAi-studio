@@ -177,6 +177,7 @@ export function App() {
 
         {step === 'scenes' && (
           <SceneSelectScreen
+            sessionId={sessionId}
             selected={selected}
             attire={attire}
             onSelectAttire={setAttire}

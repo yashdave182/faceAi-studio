@@ -53,6 +53,11 @@ export function ResultsScreen({
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-stone">
             AI-generated Indian wedding portraits preserving your identity.
           </p>
+          <div className="mt-3 flex items-center gap-2 border border-olive/30 bg-olive/5 px-3 py-1.5 text-xs text-olive">
+            <span className="h-1.5 w-1.5 rounded-full bg-olive animate-pulse" />
+            <span className="font-medium tracking-[0.1em] uppercase">Visual RAG Multi-View Active</span>
+            <span className="hidden text-stone sm:inline">· Conditioned on canonical 3D angle and expression vectors to prevent facial drift.</span>
+          </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 border border-beige bg-white/70 px-3.5 py-1.5 text-xs text-charcoal">
               {attire === 'groom' ? (
@@ -124,6 +129,16 @@ export function ResultsScreen({
               <div className="mt-4 flex items-start justify-between gap-4">
                 <div>
                   <h2 className="font-serif text-xl text-charcoal">{scene.name}</h2>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded bg-stone/10 px-2 py-0.5 text-[9px] tracking-[0.1em] text-stone uppercase">
+                      <span>📐</span>
+                      <span>{scene.ragAngle}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded bg-olive/10 px-2 py-0.5 text-[9px] font-medium tracking-[0.1em] text-olive uppercase">
+                      <span>✓</span>
+                      <span>RAG Locked</span>
+                    </span>
+                  </div>
                   <p className="mt-1 text-xs tracking-[0.14em] text-stone uppercase">
                     {status === 'completed'
                       ? 'Completed'

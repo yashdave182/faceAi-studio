@@ -1,4 +1,4 @@
-import type { AttireStyle, SceneKey, SessionStatus, UploadResponse } from '../types'
+import type { AttireStyle, IdentityBankResponse, SceneKey, SessionStatus, UploadResponse } from '../types'
 
 export interface ServerConfig {
   model: string | null
@@ -83,3 +83,12 @@ export function portraitDownloadUrl(sessionId: string, scene: string): string {
 export function bundleDownloadUrl(sessionId: string): string {
   return `${API_BASE}/api/sessions/${sessionId}/download`
 }
+
+export function getIdentityBank(sessionId: string): Promise<IdentityBankResponse> {
+  return request<IdentityBankResponse>(`/api/sessions/${sessionId}/identity_bank`)
+}
+
+export function identityAnchorPreviewUrl(sessionId: string, sceneKey: string): string {
+  return `${API_BASE}/api/sessions/${sessionId}/identity_bank/${sceneKey}`
+}
+
