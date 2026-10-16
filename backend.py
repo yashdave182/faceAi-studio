@@ -428,6 +428,8 @@ def _is_retryable(exc: Exception) -> bool:
         return False
     if "exhausted balance" in text or "user is locked" in text:
         return False
+    if "prepayment credits" in text or "credits are depleted" in text or "402" in text:
+        return False
     return True
 
 
@@ -436,6 +438,11 @@ def _friendly_generation_error(exc: Exception) -> str:
         return str(exc)  # already a user-facing message
     text = str(exc)
     lowered = text.lower()
+    if "prepayment credits" in lowered or "credits are depleted" in lowered or "402" in text:
+        return (
+            "The Gemini API key's prepayment credits are depleted. "
+            "Top up billing credits in Google AI Studio (https://aistudio.google.com)."
+        )
     if "exceeded your current quota" in lowered or "check your plan and billing" in lowered:
         return (
             "The Gemini API key has no remaining quota for image generation. "
