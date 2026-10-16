@@ -1,4 +1,4 @@
-"""Face Consistency Studio — FastAPI backend.
+"""Lovers AI — Face Consistency Demo — FastAPI backend.
 
 Generates wedding portraits from one reference photograph through a
 configurable model chain (fal.ai FLUX PuLID primary, Gemini image models as
@@ -635,7 +635,7 @@ async def _run_generation(session_id: str, scene_key: str) -> None:
 # API
 # --------------------------------------------------------------------------- #
 
-app = FastAPI(title="Face Consistency Studio API", version="1.0.0")
+app = FastAPI(title="Lovers AI — Face Consistency Demo API", version="1.0.0")
 
 _default_origins = [
     "http://localhost:5173",
@@ -853,7 +853,7 @@ def download_bundle(session_id: str) -> StreamingResponse:
     return StreamingResponse(
         buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": 'attachment; filename="face-consistency-portraits.zip"'},
+        headers={"Content-Disposition": 'attachment; filename="lovers-ai-portraits.zip"'},
     )
 
 

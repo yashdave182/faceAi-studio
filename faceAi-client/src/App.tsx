@@ -216,7 +216,7 @@ export function App() {
             are deleted when you start over.
           </p>
           <p className="text-[11px] tracking-[0.18em] text-stone uppercase">
-            Face Consistency Studio
+            Lovers AI · Face Consistency Demo
           </p>
         </div>
       </footer>

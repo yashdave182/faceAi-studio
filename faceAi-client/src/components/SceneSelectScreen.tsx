@@ -1,4 +1,5 @@
 import { SCENES, type AttireStyle, type SceneKey } from '../types'
+import { BrideIcon, GroomIcon } from './AttireIcons'
 import { SceneIllustration } from './SceneIllustration'
 
 interface Props {
@@ -49,7 +50,7 @@ export function SceneSelectScreen({
                   : 'text-stone hover:text-charcoal'
               }`}
             >
-              <span>🤵</span>
+              <GroomIcon className="h-4 w-4" />
               <span>Groom (Men's Attire)</span>
             </button>
             <button
@@ -61,7 +62,7 @@ export function SceneSelectScreen({
                   : 'text-stone hover:text-charcoal'
               }`}
             >
-              <span>👰</span>
+              <BrideIcon className="h-4 w-4" />
               <span>Bride (Women's Attire)</span>
             </button>
           </div>

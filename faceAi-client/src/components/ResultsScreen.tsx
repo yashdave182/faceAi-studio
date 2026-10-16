@@ -5,6 +5,7 @@ import {
   portraitUrl,
 } from '../lib/api'
 import { SCENES, type AttireStyle, type SceneKey, type SceneState } from '../types'
+import { BrideIcon, GroomIcon } from './AttireIcons'
 import { Lightbox } from './Lightbox'
 
 interface Props {
@@ -54,7 +55,11 @@ export function ResultsScreen({
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 border border-beige bg-white/70 px-3.5 py-1.5 text-xs text-charcoal">
-              <span>{attire === 'groom' ? '🤵' : '👰'}</span>
+              {attire === 'groom' ? (
+                <GroomIcon className="h-4 w-4 text-olive" />
+              ) : (
+                <BrideIcon className="h-4 w-4 text-olive" />
+              )}
               <span className="font-medium">
                 {attire === 'groom' ? "Groom (Men's Attire)" : "Bride (Women's Attire)"}
               </span>

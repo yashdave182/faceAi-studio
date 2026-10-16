@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { confirmConsent, uploadReference } from '../lib/api'
 import type { AttireStyle } from '../types'
+import { BrideIcon, GroomIcon } from './AttireIcons'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -67,13 +68,11 @@ export function UploadScreen({ initialAttire, onUploaded }: Props) {
   return (
     <section className="fade-up mx-auto max-w-3xl px-6 pt-16 pb-24 sm:px-10">
       <div className="max-w-xl">
-        <p className="mb-6 text-[11px] tracking-[0.28em] text-stone uppercase">Step one · Reference photograph</p>
-        <h1 className="font-serif text-5xl leading-[1.05] font-medium text-charcoal sm:text-6xl">
-          One face. Three wedding stories.
+        <h1 className="font-serif text-4xl leading-[1.1] font-medium text-charcoal sm:text-5xl">
+          Upload Your Photograph
         </h1>
-        <p className="mt-6 max-w-md text-base leading-relaxed text-stone">
-          Explore three wedding aesthetics using one reference photograph. The same photograph is
-          used for every portrait.
+        <p className="mt-3 text-sm leading-relaxed text-stone">
+          Choose a clear photo to create your personalized Indian wedding portraits.
         </p>
       </div>
 
@@ -162,7 +161,7 @@ export function UploadScreen({ initialAttire, onUploaded }: Props) {
                   : 'border-beige bg-white/40 hover:border-stone'
               }`}
             >
-              <span className="text-3xl">🤵</span>
+              <GroomIcon className="h-8 w-8 text-olive" />
               <div>
                 <p className="font-serif text-lg font-medium text-charcoal">Male (Groom)</p>
                 <p className="text-[11px] text-stone">Royal Sherwani, Safa & Bandhgala</p>
@@ -188,7 +187,7 @@ export function UploadScreen({ initialAttire, onUploaded }: Props) {
                   : 'border-beige bg-white/40 hover:border-stone'
               }`}
             >
-              <span className="text-3xl">👰</span>
+              <BrideIcon className="h-8 w-8 text-olive" />
               <div>
                 <p className="font-serif text-lg font-medium text-charcoal">Female (Bride)</p>
                 <p className="text-[11px] text-stone">Bridal Lehenga, Kundan & Dupatta</p>
