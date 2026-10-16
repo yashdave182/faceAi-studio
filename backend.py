@@ -8,6 +8,7 @@ fallback). All provider keys stay server-side at all times.
 import asyncio
 import base64
 import io
+import mimetypes
 import os
 import time
 import uuid
@@ -17,8 +18,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
+mimetypes.init()
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("application/javascript", ".mjs")
+mimetypes.add_type("text/css", ".css")
+
 import httpx
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -891,16 +897,38 @@ def reset(session_id: str) -> dict[str, str]:
 
 DIST_DIR = Path(__file__).parent / "faceAi-client" / "dist"
 if DIST_DIR.exists():
-    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
+    assets_dir = DIST_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    @app.exception_handler(404)
-    async def not_found_handler(request, exc):
-        if not request.url.path.startswith("/api"):
-            index_path = DIST_DIR / "index.html"
-            if index_path.exists():
-                return FileResponse(index_path)
-        detail = getattr(exc, "detail", "Not Found")
-        return JSONResponse(status_code=404, content={"detail": detail})
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str = ""):
+        # Don't intercept API routes
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+
+        # Static assets inside dist (favicon.svg, icons.svg, etc.)
+        target = DIST_DIR / full_path
+        if full_path and target.is_file():
+            return FileResponse(target)
+
+        # If a missing script, style, or asset was requested, return 404 - never text/html index.html!
+        if any(full_path.endswith(ext) for ext in (".js", ".mjs", ".css", ".map", ".ico", ".svg", ".png", ".jpg", ".webp", ".woff", ".woff2")):
+            raise HTTPException(status_code=404, detail="Asset not found")
+
+        # Fallback to index.html with strictly disabled cache
+        index_file = DIST_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(
+                index_file,
+                media_type="text/html",
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
+        raise HTTPException(status_code=404, detail="Frontend build index.html not found")
 
 
 if __name__ == "__main__":
