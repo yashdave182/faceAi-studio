@@ -47,8 +47,10 @@ def _load_env_file() -> None:
 
 _load_env_file()
 
-GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-nano-banana-2.1").strip()
-FAL_ID_WEIGHT = float(os.getenv("FAL_ID_WEIGHT", "1"))
+FAL_ID_WEIGHT = min(float(os.getenv("FAL_ID_WEIGHT", "1.0")), 1.0)
+FAL_INFERENCE_STEPS = int(os.getenv("FAL_INFERENCE_STEPS", "28"))
+FAL_GUIDANCE_SCALE = float(os.getenv("FAL_GUIDANCE_SCALE", "4.0"))
+FAL_ENABLE_ENHANCE = os.getenv("FAL_ENABLE_ENHANCE", "true").lower() in ("true", "1", "yes")
 FAL_DEFAULT_MODEL = "fal-ai/flux-pulid"
 
 # Ordered provider chain: primary first, then fallback(s). Comma-separated,
@@ -430,6 +432,8 @@ def _generate_via_fal(
                 "prompt": prompt,
                 "image_size": "portrait_4_3",
                 "id_weight": FAL_ID_WEIGHT,
+                "num_inference_steps": FAL_INFERENCE_STEPS,
+                "guidance_scale": FAL_GUIDANCE_SCALE,
             },
         )
     except Exception as exc:  # noqa: BLE001 - normalised into a readable error
@@ -439,6 +443,20 @@ def _generate_via_fal(
     image_url = images[0].get("url") if images and isinstance(images[0], dict) else None
     if not image_url:
         raise GenerationError("FLUX PuLID did not return an image for this scene. Try again.")
+
+    if FAL_ENABLE_ENHANCE:
+        try:
+            print("[fal] Running optional face enhancement step...", flush=True)
+            enhance_res = fal_client.subscribe(
+                "fal-ai/image-editing/face-enhancement",
+                arguments={"image_url": image_url},
+            )
+            enhanced_images = (enhance_res or {}).get("images") or []
+            if enhanced_images and isinstance(enhanced_images[0], dict) and enhanced_images[0].get("url"):
+                image_url = enhanced_images[0]["url"]
+                print("[fal] Face enhancement succeeded.", flush=True)
+        except Exception as enhance_exc:
+            print(f"[fal] Face enhancement skipped or failed: {enhance_exc}", flush=True)
 
     response = httpx.get(image_url, timeout=60, follow_redirects=True)
     response.raise_for_status()
