@@ -5,7 +5,7 @@ import {
   portraitUrl,
   referenceUrl,
 } from '../lib/api'
-import { SCENES, type SceneKey, type SceneState } from '../types'
+import { SCENES, type AttireStyle, type SceneKey, type SceneState } from '../types'
 import { Lightbox } from './Lightbox'
 
 interface Props {
@@ -13,8 +13,9 @@ interface Props {
   selected: SceneKey[]
   scenes: Record<string, SceneState>
   previewUrl: string | null
-  onRegenerate: (key: SceneKey) => void
-  onRegenerateAll: () => void
+  attire: AttireStyle
+  onRegenerate: (key: SceneKey, attire?: AttireStyle) => void
+  onRegenerateAll: (attire?: AttireStyle) => void
   onStartOver: () => void
 }
 
@@ -23,6 +24,7 @@ export function ResultsScreen({
   selected,
   scenes,
   previewUrl,
+  attire,
   onRegenerate,
   onRegenerateAll,
   onStartOver,
@@ -55,12 +57,26 @@ export function ResultsScreen({
         <div>
           <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step four · Results</p>
           <h1 className="mt-3 font-serif text-4xl font-medium text-charcoal sm:text-5xl">
-            Your three wedding portraits.
+            Your Indian wedding portraits.
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-stone">
-            AI-generated portraits — likeness may vary between scenes. Review each result with the
-            reference photograph before any use.
+            AI-generated Indian wedding portraits preserving your identity.
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 border border-beige bg-white/70 px-3.5 py-1.5 text-xs text-charcoal">
+              <span>{attire === 'groom' ? '🤵' : '👰'}</span>
+              <span className="font-medium">
+                {attire === 'groom' ? "Groom (Men's Attire)" : "Bride (Women's Attire)"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => onRegenerateAll(attire === 'groom' ? 'bride' : 'groom')}
+              className="border border-beige bg-white/40 px-3.5 py-1.5 text-xs tracking-[0.1em] text-stone uppercase transition-colors hover:border-olive hover:text-olive"
+            >
+              Switch to {attire === 'groom' ? "Bride (Women's)" : "Groom (Men's)"} & Regenerate
+            </button>
+          </div>
         </div>
 
         {previewUrl && (
@@ -168,7 +184,7 @@ export function ResultsScreen({
         <div className="flex flex-wrap items-center gap-6">
           <button
             type="button"
-            onClick={onRegenerateAll}
+            onClick={() => onRegenerateAll()}
             className="bg-charcoal px-10 py-3.5 text-sm tracking-[0.14em] text-ivory uppercase transition-colors duration-200 hover:bg-olive"
           >
             Generate another set

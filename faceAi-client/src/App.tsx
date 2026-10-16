@@ -5,7 +5,7 @@ import { ResultsScreen } from './components/ResultsScreen'
 import { SceneSelectScreen } from './components/SceneSelectScreen'
 import { UploadScreen } from './components/UploadScreen'
 import { getConfig, getStatus, resetSession, startGeneration } from './lib/api'
-import { SCENES, type SceneKey, type SceneState } from './types'
+import { SCENES, type AttireStyle, type SceneKey, type SceneState } from './types'
 
 type Step = 'upload' | 'scenes' | 'generation' | 'results'
 
@@ -15,6 +15,7 @@ export function App() {
   const [step, setStep] = useState<Step>('upload')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [attire, setAttire] = useState<AttireStyle>('groom')
   const [selected, setSelected] = useState<SceneKey[]>([...ALL_SCENES])
   const [sceneStates, setSceneStates] = useState<Record<string, SceneState>>({})
   const [notice, setNotice] = useState<string | null>(null)
@@ -95,12 +96,20 @@ export function App() {
     )
   }
 
-  async function runGeneration(scenes: SceneKey[], nextStep: Step) {
+  async function runGeneration(
+    scenes: SceneKey[],
+    nextStep: Step,
+    overrideAttire?: AttireStyle,
+  ) {
     if (!sessionId) return
+    const activeAttire = overrideAttire ?? attire
+    if (overrideAttire && overrideAttire !== attire) {
+      setAttire(overrideAttire)
+    }
     setBusy(true)
     setNotice(null)
     try {
-      await startGeneration(sessionId, scenes)
+      await startGeneration(sessionId, scenes, activeAttire)
       setSceneStates((previous) => {
         const updated = { ...previous }
         for (const key of scenes) {
@@ -125,12 +134,12 @@ export function App() {
     await runGeneration(selected, 'generation')
   }
 
-  async function handleRegenerate(keys: SceneKey[]) {
-    await runGeneration(keys, step === 'results' ? 'results' : 'generation')
+  async function handleRegenerate(keys: SceneKey[], overrideAttire?: AttireStyle) {
+    await runGeneration(keys, step === 'results' ? 'results' : 'generation', overrideAttire)
   }
 
-  async function handleRegenerateAll() {
-    await runGeneration(selected, 'generation')
+  async function handleRegenerateAll(overrideAttire?: AttireStyle) {
+    await runGeneration(selected, 'generation', overrideAttire)
   }
 
   async function handleStartOver() {
@@ -140,6 +149,7 @@ export function App() {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     setSessionId(null)
     setPreviewUrl(null)
+    setAttire('groom')
     setSelected([...ALL_SCENES])
     setSceneStates({})
     setNotice(null)
@@ -166,6 +176,8 @@ export function App() {
           <SceneSelectScreen
             previewUrl={previewUrl}
             selected={selected}
+            attire={attire}
+            onSelectAttire={setAttire}
             onToggle={handleToggleScene}
             onGenerate={handleGenerate}
             busy={busy}
@@ -188,8 +200,9 @@ export function App() {
             selected={selected}
             scenes={sceneStates}
             previewUrl={previewUrl}
-            onRegenerate={(key) => void handleRegenerate([key])}
-            onRegenerateAll={() => void handleRegenerateAll()}
+            attire={attire}
+            onRegenerate={(key, newAttire) => void handleRegenerate([key], newAttire)}
+            onRegenerateAll={(newAttire) => void handleRegenerateAll(newAttire)}
             onStartOver={() => void handleStartOver()}
           />
         )}

@@ -1,16 +1,27 @@
-import { SCENES, type SceneKey } from '../types'
+import { SCENES, type AttireStyle, type SceneKey } from '../types'
 import { SceneIllustration } from './SceneIllustration'
 
 interface Props {
   previewUrl: string | null
   selected: SceneKey[]
+  attire: AttireStyle
+  onSelectAttire: (attire: AttireStyle) => void
   onToggle: (key: SceneKey) => void
   onGenerate: () => void
   busy: boolean
   error: string | null
 }
 
-export function SceneSelectScreen({ previewUrl, selected, onToggle, onGenerate, busy, error }: Props) {
+export function SceneSelectScreen({
+  previewUrl,
+  selected,
+  attire,
+  onSelectAttire,
+  onToggle,
+  onGenerate,
+  busy,
+  error,
+}: Props) {
   return (
     <section className="fade-up mx-auto max-w-5xl px-6 pt-14 pb-24 sm:px-10">
       <div className="flex flex-wrap items-center gap-6 border-b border-beige pb-8">
@@ -24,10 +35,62 @@ export function SceneSelectScreen({ previewUrl, selected, onToggle, onGenerate, 
         <div>
           <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step two · Choose your scenes</p>
           <h1 className="mt-2 font-serif text-3xl font-medium text-charcoal sm:text-4xl">
-            Where should this story take place?
+            Where should this Indian wedding story take place?
           </h1>
         </div>
       </div>
+
+      {/* Wedding Role & Attire Selection */}
+      <div className="mt-8 border border-beige bg-white/70 p-6 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] tracking-[0.24em] text-stone uppercase">Wedding Role & Attire</p>
+            <h2 className="mt-1 font-serif text-2xl font-medium text-charcoal">Who is this portrait for?</h2>
+            <p className="mt-1 text-xs text-stone">
+              Select your role so the AI creates authentic Indian groom or bridal wedding attire.
+            </p>
+          </div>
+          <div className="flex border border-beige bg-ivory p-1">
+            <button
+              type="button"
+              onClick={() => onSelectAttire('groom')}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs tracking-[0.14em] uppercase transition-all ${
+                attire === 'groom'
+                  ? 'bg-charcoal font-medium text-ivory shadow-sm'
+                  : 'text-stone hover:text-charcoal'
+              }`}
+            >
+              <span>🤵</span>
+              <span>Groom (Men's Attire)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectAttire('bride')}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs tracking-[0.14em] uppercase transition-all ${
+                attire === 'bride'
+                  ? 'bg-charcoal font-medium text-ivory shadow-sm'
+                  : 'text-stone hover:text-charcoal'
+              }`}
+            >
+              <span>👰</span>
+              <span>Bride (Women's Attire)</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 border-t border-beige/60 pt-3 text-[11px] text-stone">
+          {attire === 'groom' ? (
+            <p>
+              ✨ <strong className="text-charcoal">Groom Styling:</strong> Royal embroidered silk sherwani, safa pagdi (turban), layered pearl kantha mala, and tailored bandhgala for an authentic masculine silhouette.
+            </p>
+          ) : (
+            <p>
+              ✨ <strong className="text-charcoal">Bride Styling:</strong> Opulent red & pastel bridal lehengas with antique gold zardozi, sheer dupatta veil, uncut polki kundan jewelry sets, and maang tikka.
+            </p>
+          )}
+        </div>
+      </div>
+
 
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {SCENES.map((scene) => {

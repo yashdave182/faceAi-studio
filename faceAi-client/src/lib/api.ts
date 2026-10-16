@@ -1,4 +1,4 @@
-import type { SceneKey, SessionStatus, UploadResponse } from '../types'
+import type { AttireStyle, SceneKey, SessionStatus, UploadResponse } from '../types'
 
 export interface ServerConfig {
   model: string | null
@@ -51,11 +51,12 @@ export function confirmConsent(sessionId: string): Promise<{ status: string }> {
 export function startGeneration(
   sessionId: string,
   scenes: SceneKey[],
+  attire: AttireStyle = 'groom',
 ): Promise<{ status: string }> {
   return request(`/api/sessions/${sessionId}/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ scenes }),
+    body: JSON.stringify({ scenes, attire }),
   })
 }
 

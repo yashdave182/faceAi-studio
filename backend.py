@@ -70,61 +70,141 @@ GENERATED_DIR = DATA_DIR / "generated"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
-SCENES: dict[str, dict[str, str]] = {
+SCENES: dict[str, dict[str, object]] = {
     "luxury_cinematic": {
-        "name": "Luxury Cinematic",
-        "prompt": (
-            "Create a photorealistic wedding portrait of the person in the reference photograph. "
-            "Scene: an elegant luxury wedding venue with refined architecture, warm candlelight "
-            "and an editorial composition; they wear sophisticated formal wedding attire. "
-            "Dramatic cinematic lighting, shallow depth of field, premium wedding photography. "
-            "Critical: keep their face exactly as it appears in the reference — same face shape, "
-            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
-            "the face; the person must remain clearly recognisable. "
-            "Full natural colour, no illustration, cartoon or painting style."
-        ),
-        "fal_prompt": (
-            "Photorealistic luxury wedding portrait of this person at an elegant grand venue "
-            "with refined architecture and warm candlelight, sophisticated formal wedding "
-            "attire, editorial composition, dramatic cinematic lighting, shallow depth of "
-            "field, premium wedding photography, natural colour"
-        ),
+        "name": "Royal Palace Heritage",
+        "tagline": "The Royal Palace",
+        "description": "Grand heritage palace courtyard, sandstone jharokhas, warm chandeliers & royal diyas.",
+        "groom": {
+            "prompt": (
+                "Create a photorealistic Indian wedding portrait of the man in the reference photograph "
+                "as an Indian royal groom (Dulha). Scene: an opulent Rajasthan heritage palace courtyard with "
+                "intricate carved sandstone jharokhas, royal chandeliers, warm diya oil lamps, and fragrant "
+                "marigold and rose garlands. Attire: an opulent bespoke ivory and gold silk sherwani with "
+                "intricate zardozi embroidery, churidar, royal maroon velvet doshala stole, regal safa "
+                "turban with pearl kalgi brooch, and a traditional groom's layered pearl kantha mala. "
+                "Critical: preserve his natural male features and keep his face exactly as it appears in "
+                "the reference — same male jawline, facial structure, eyes, nose, mouth, skin tone and hair. "
+                "Do NOT feminize the face. Do NOT put him in a dress, bridal lehenga, bindi, or female earrings. "
+                "Full natural colour, editorial royal Indian wedding photography, no cartoon style."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian man as a royal groom at a magnificent heritage "
+                "palace courtyard in Rajasthan, grand carved sandstone jharokhas, warm palace chandeliers "
+                "and diya oil lamps, marigold and rose garlands, wearing an opulent ivory and gold silk "
+                "sherwani with intricate zardozi embroidery, churidar, royal velvet doshala shawl, "
+                "a regal safa turban with pearl kalgi brooch, multi-layer groom pearl necklace kantha mala, "
+                "masculine groom styling, editorial royal Indian wedding photography, warm golden hour "
+                "lighting, premium wedding photography, natural colour"
+            ),
+        },
+        "bride": {
+            "prompt": (
+                "Create a photorealistic Indian wedding portrait of the woman in the reference photograph "
+                "as an Indian royal bride (Dulhan). Scene: an opulent Rajasthan heritage palace courtyard with "
+                "intricate carved sandstone arches, royal chandeliers, warm diya lamps and marigold garlands. "
+                "Attire: an exquisite crimson red bridal lehenga with heavy antique gold zardozi embroidery, "
+                "sheer embroidered dupatta veil, uncut polki kundan bridal necklace, maang tikka, and jhumkas. "
+                "Critical: keep her face exactly as it appears in the reference — same face shape, features, "
+                "eyes, nose, mouth, skin tone and hair. Full natural colour, editorial wedding photography."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian woman as a royal bride at a magnificent heritage "
+                "palace courtyard in Rajasthan, grand carved sandstone jharokhas, warm chandeliers "
+                "and diya oil lamps, marigold garlands, wearing an opulent crimson red bridal lehenga "
+                "with heavy antique gold zardozi embroidery, sheer embroidered dupatta veil over head, "
+                "royal uncut polki kundan necklace, maang tikka, jhumka earrings, bridal chooda bangles, "
+                "editorial wedding photography, natural colour"
+            ),
+        },
     },
     "beach_destination": {
-        "name": "Beach / Destination",
-        "prompt": (
-            "Create a photorealistic wedding portrait of the person in the reference photograph. "
-            "Scene: an oceanfront destination wedding at golden hour, soft natural sunlight, "
-            "sea breeze, elegant beach wedding attire. Clean seaside backdrop, airy natural light. "
-            "Critical: keep their face exactly as it appears in the reference — same face shape, "
-            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
-            "the face; the person must remain clearly recognisable. "
-            "Full natural colour, no illustration, cartoon or painting style."
-        ),
-        "fal_prompt": (
-            "Photorealistic destination wedding portrait of this person on an oceanfront beach "
-            "at golden hour, soft natural sunlight, sea breeze, elegant beach wedding attire, "
-            "clean seaside backdrop, airy natural light, premium wedding photography, "
-            "natural colour"
-        ),
+        "name": "Goa Coastal Mandap",
+        "tagline": "The Sunset Mandap",
+        "description": "Scenic beachside sunset, fresh mogra & marigold mandap, elegant coastal festive attire.",
+        "groom": {
+            "prompt": (
+                "Create a photorealistic Indian wedding portrait of the man in the reference photograph "
+                "as a groom at a destination beach wedding in Goa. Scene: a scenic oceanfront beach at "
+                "golden hour with an authentic Indian floral mandap draped with fresh white mogra (jasmine) "
+                "and orange marigolds, soft sea breeze, tropical palms. Attire: a contemporary tailored "
+                "raw silk bandhgala jacket in pastel ivory or blush tones, embroidered mandarin collar, "
+                "and tailored trousers. Masculine groom styling. "
+                "Critical: preserve his natural male features, masculine jawline, and keep his face "
+                "exactly as it appears in the reference. Do NOT feminize the face or put him in women's clothing. "
+                "Full natural colour, no cartoon style."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian man as a groom at an oceanfront beach wedding "
+                "in Goa at golden hour, traditional seaside floral mandap decorated with fresh white "
+                "mogra jasmine and orange marigolds, soft ocean breeze, tropical palms, wearing a "
+                "tailored blush peach or ivory raw silk bandhgala jacket with embroidered collar and "
+                "tailored trousers, elegant contemporary Indian groom attire, masculine styling, "
+                "warm coastal sunset glow, premium Indian wedding photography, natural colour"
+            ),
+        },
+        "bride": {
+            "prompt": (
+                "Create a photorealistic Indian wedding portrait of the woman in the reference photograph "
+                "as a bride at a destination beach wedding in Goa. Scene: scenic oceanfront beach at golden "
+                "hour with a traditional Indian floral mandap with marigolds and fresh jasmine. Attire: a "
+                "graceful pastel blush pink or coral designer silk lehenga with delicate mirror work and "
+                "floral embroidery, lightweight floral and gold jewelry. "
+                "Critical: keep her face exactly as it appears in the reference. Full natural colour."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian woman as a bride at an oceanfront beach wedding "
+                "in Goa at golden hour, scenic seaside floral mandap with fresh white mogra jasmine and "
+                "marigolds, soft sea breeze, wearing a graceful pastel blush pink or coral designer silk "
+                "lehenga with delicate mirror work and floral embroidery, lightweight floral and gold "
+                "jewelry, fresh flowers in hair, soft coastal sunset light, premium Indian wedding photography, natural colour"
+            ),
+        },
     },
     "traditional_indian": {
-        "name": "Traditional Indian",
-        "prompt": (
-            "Create a photorealistic traditional Indian wedding portrait of the person in the "
-            "reference photograph. Scene: a culturally appropriate Indian wedding — rich "
-            "traditional attire, detailed gold jewellery, intricate embroidery, ornate floral "
-            "décor and warm ceremonial lighting. "
-            "Critical: keep their face exactly as it appears in the reference — same face shape, "
-            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
-            "the face; the person must remain clearly recognisable. "
-            "Full natural colour, no illustration, cartoon or painting style."
-        ),
-        "fal_prompt": (
-            "Photorealistic traditional Indian wedding portrait of this person, rich "
-            "traditional attire, detailed gold jewellery, intricate embroidery, ornate floral "
-            "décor, warm ceremonial lighting, premium wedding photography, natural colour"
-        ),
+        "name": "Grand Vivah Mandap",
+        "tagline": "The Sacred Vivah",
+        "description": "Traditional Vedic vivah ceremony, warm havan glow, rich silk & zardozi embroidery.",
+        "groom": {
+            "prompt": (
+                "Create a photorealistic traditional Indian wedding portrait of the man in the reference "
+                "photograph as an Indian groom (Dulha) at a Vedic Vivah ceremony. Scene: an authentic "
+                "grand Indian wedding mandap with cascading marigold bells, brass lamps, and the warm glow "
+                "of the sacred havan fire. Attire: a rich royal emerald green or gold embroidered achkan "
+                "sherwani, brocade safa turban, embroidered groom's stole, and layered pearl mala. "
+                "Critical: preserve his natural masculine features and keep his face exactly as it appears "
+                "in the reference — same male face shape, features, eyes, nose, mouth, skin tone and hair. "
+                "Do NOT put him in female bridal wear, bindi, or female earrings. "
+                "Full natural colour, no cartoon style."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian man as a groom at a traditional grand Vedic Vivah "
+                "ceremony, ornate wedding mandap adorned with cascading marigold bells, brass urlis with "
+                "floating candles and red roses, sacred havan fire glow, wearing a rich royal emerald "
+                "green or gold embroidered achkan sherwani, an ornate matching doshala dupatta shawl, "
+                "traditional brocade safa turban, classic groom pearl mala, regal masculine Indian groom "
+                "styling, warm ceremonial ambiance, premium wedding photography, natural colour"
+            ),
+        },
+        "bride": {
+            "prompt": (
+                "Create a photorealistic traditional Indian wedding portrait of the woman in the reference "
+                "photograph as an Indian bride (Dulhan) at a Vedic Vivah ceremony. Scene: an authentic grand "
+                "traditional wedding mandap with cascading marigolds, brass lamps, and sacred fire glow. "
+                "Attire: an opulent vermilion red and gold Banarasi silk lehenga with heavy zardozi "
+                "embroidery, traditional temple gold jewelry set, bridal maang tikka, nath nose ring, "
+                "jhumkas, red bridal bindi, and floral hair ornaments. "
+                "Critical: keep her face exactly as it appears in the reference. Full natural colour."
+            ),
+            "fal_prompt": (
+                "Photorealistic portrait of this Indian woman as a traditional bride at a grand Vedic "
+                "Vivah ceremony, ornate wedding mandap with cascading marigolds, brass lamps, sacred havan "
+                "fire glow, wearing a rich traditional vermilion red and gold Banarasi silk lehenga with "
+                "heavy zardozi embroidery, traditional temple gold jewelry set, bridal maang tikka, "
+                "nath nose ring, jhumkas, red bridal bindi, ornate floral gajra in hair, warm ceremonial "
+                "lighting, premium wedding photography, natural colour"
+            ),
+        },
     },
 }
 
@@ -149,6 +229,7 @@ class Session:
     id: str
     created_at: datetime
     consent: bool = False
+    attire: str = "groom"  # groom | bride
     reference_file: Optional[str] = None
     reference_mime: Optional[str] = None
     scenes: dict[str, SceneJob] = field(
@@ -411,11 +492,15 @@ def _any_provider_key_configured() -> bool:
     return any(keys.get(provider, False) for provider, _ in MODEL_CHAIN)
 
 
-def _prompt_for(provider: str, scene_key: str) -> str:
+def _prompt_for(provider: str, scene_key: str, attire: str = "groom") -> str:
     scene = SCENES[scene_key]
+    normalized_attire = attire if attire in ("groom", "bride") else "groom"
+    variant = scene.get(normalized_attire)
+    if not isinstance(variant, dict):
+        variant = scene.get("groom") if isinstance(scene.get("groom"), dict) else {}
     if provider == "fal":
-        return scene.get(FAL_PROMPT_KEY, scene["prompt"])
-    return scene["prompt"]
+        return str(variant.get(FAL_PROMPT_KEY, variant.get("prompt", "")))
+    return str(variant.get("prompt", ""))
 
 
 def _is_retryable(exc: Exception) -> bool:
@@ -469,7 +554,7 @@ def _friendly_generation_error(exc: Exception) -> str:
 
 
 def _generate_blocking(
-    reference_bytes: bytes, mime: str, scene_key: str
+    reference_bytes: bytes, mime: str, scene_key: str, attire: str = "groom"
 ) -> tuple[bytes, str]:
     """Generate one portrait by walking the configured model chain."""
     if not MODEL_CHAIN:
@@ -480,7 +565,7 @@ def _generate_blocking(
     failures: list[tuple[str, Exception]] = []
 
     for provider, model_id in MODEL_CHAIN:
-        prompt = _prompt_for(provider, scene_key)
+        prompt = _prompt_for(provider, scene_key, attire)
         for attempt in range(MAX_ATTEMPTS):
             try:
                 return _PROVIDERS[provider](reference_bytes, mime, prompt, model_id)
@@ -522,6 +607,7 @@ async def _run_generation(session_id: str, scene_key: str) -> None:
                 reference_bytes,
                 session.reference_mime or "image/jpeg",
                 scene_key,
+                getattr(session, "attire", "groom"),
             ),
             timeout=GENERATION_TIMEOUT_SECONDS,
         )
@@ -582,6 +668,7 @@ app.add_middleware(
 
 class GenerateRequest(BaseModel):
     scenes: list[str]
+    attire: Optional[str] = "groom"
 
 
 def _status_payload(session: Session) -> dict[str, object]:
@@ -596,6 +683,7 @@ def _status_payload(session: Session) -> dict[str, object]:
         "session_id": session.id,
         "consent_confirmed": session.consent,
         "has_reference": session.reference_file is not None,
+        "attire": getattr(session, "attire", "groom"),
         "scenes": scenes,
         "all_settled": all_settled,
     }
@@ -667,6 +755,9 @@ def confirm_consent(session_id: str) -> dict[str, str]:
 @app.post("/api/sessions/{session_id}/generate")
 async def generate(session_id: str, payload: GenerateRequest) -> dict[str, object]:
     session = _require_session(session_id)
+
+    if payload.attire and payload.attire.lower() in {"groom", "bride"}:
+        session.attire = payload.attire.lower()
 
     if not session.consent:
         raise HTTPException(status_code=400, detail="Consent must be confirmed before generating.")

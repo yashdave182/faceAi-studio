@@ -1,5 +1,7 @@
 export type SceneKey = 'luxury_cinematic' | 'beach_destination' | 'traditional_indian'
 
+export type AttireStyle = 'groom' | 'bride'
+
 export type SceneStatus = 'idle' | 'pending' | 'generating' | 'completed' | 'failed'
 
 export interface SceneState {
@@ -12,6 +14,7 @@ export interface SessionStatus {
   session_id: string
   consent_confirmed: boolean
   has_reference: boolean
+  attire?: AttireStyle
   scenes: Record<string, SceneState>
   all_settled: boolean
 }
@@ -33,20 +36,21 @@ export interface SceneDefinition {
 export const SCENES: SceneDefinition[] = [
   {
     key: 'luxury_cinematic',
-    name: 'Luxury Cinematic',
-    tagline: 'The grand venue',
-    description: 'Elegant venue, sophisticated styling, dramatic cinematic lighting.',
+    name: 'Royal Palace Heritage',
+    tagline: 'The Royal Palace',
+    description: 'Grand heritage palace courtyard, sandstone jharokhas, warm chandeliers & royal diyas.',
   },
   {
     key: 'beach_destination',
-    name: 'Beach / Destination',
-    tagline: 'The shoreline vow',
-    description: 'Oceanfront wedding, natural sunlight, destination wedding styling.',
+    name: 'Goa Coastal Mandap',
+    tagline: 'The Sunset Mandap',
+    description: 'Scenic beachside sunset, fresh mogra & marigold mandap, elegant coastal festive attire.',
   },
   {
     key: 'traditional_indian',
-    name: 'Traditional Indian',
-    tagline: 'The timeless ceremony',
-    description: 'Culturally appropriate wedding attire, traditional jewellery, detailed décor.',
+    name: 'Grand Vivah Mandap',
+    tagline: 'The Sacred Vivah',
+    description: 'Traditional Vedic vivah ceremony, warm havan glow, rich silk & zardozi embroidery.',
   },
 ]
+
