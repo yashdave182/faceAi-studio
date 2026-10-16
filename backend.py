@@ -1,0 +1,799 @@
+"""Face Consistency Studio — FastAPI backend.
+
+Generates wedding portraits from one reference photograph through a
+configurable model chain (fal.ai FLUX PuLID primary, Gemini image models as
+fallback). All provider keys stay server-side at all times.
+"""
+
+import asyncio
+import base64
+import io
+import os
+import time
+import uuid
+import zipfile
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Callable, Optional
+
+import httpx
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+from google import genai
+from google.genai import types
+
+
+# --------------------------------------------------------------------------- #
+# Configuration — the exact model ID lives here and nowhere else.
+# --------------------------------------------------------------------------- #
+
+def _load_env_file() -> None:
+    """Minimal .env loader so the demo runs without extra dependencies."""
+    env_path = Path(__file__).parent / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_env_file()
+
+GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-nano-banana-2.1").strip()
+FAL_ID_WEIGHT = float(os.getenv("FAL_ID_WEIGHT", "1"))
+FAL_DEFAULT_MODEL = "fal-ai/flux-pulid"
+
+# Ordered provider chain: primary first, then fallback(s). Comma-separated,
+# each entry "provider:model" (provider = fal | gemini).
+IMAGE_MODEL_PRIMARY = os.getenv("IMAGE_MODEL_PRIMARY", f"fal:{FAL_DEFAULT_MODEL}").strip()
+IMAGE_MODEL_FALLBACK = os.getenv(
+    "IMAGE_MODEL_FALLBACK", f"gemini:{GEMINI_IMAGE_MODEL}"
+).strip()
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+ALLOWED_MIME_TO_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+SESSION_TTL = timedelta(minutes=30)
+GENERATION_TIMEOUT_SECONDS = 180
+MAX_ATTEMPTS = 2
+
+DATA_DIR = Path(__file__).parent / "data"
+UPLOAD_DIR = DATA_DIR / "uploads"
+GENERATED_DIR = DATA_DIR / "generated"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+
+SCENES: dict[str, dict[str, str]] = {
+    "luxury_cinematic": {
+        "name": "Luxury Cinematic",
+        "prompt": (
+            "Create a photorealistic wedding portrait of the person in the reference photograph. "
+            "Scene: an elegant luxury wedding venue with refined architecture, warm candlelight "
+            "and an editorial composition; they wear sophisticated formal wedding attire. "
+            "Dramatic cinematic lighting, shallow depth of field, premium wedding photography. "
+            "Critical: keep their face exactly as it appears in the reference — same face shape, "
+            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
+            "the face; the person must remain clearly recognisable. "
+            "Full natural colour, no illustration, cartoon or painting style."
+        ),
+        "fal_prompt": (
+            "Photorealistic luxury wedding portrait of this person at an elegant grand venue "
+            "with refined architecture and warm candlelight, sophisticated formal wedding "
+            "attire, editorial composition, dramatic cinematic lighting, shallow depth of "
+            "field, premium wedding photography, natural colour"
+        ),
+    },
+    "beach_destination": {
+        "name": "Beach / Destination",
+        "prompt": (
+            "Create a photorealistic wedding portrait of the person in the reference photograph. "
+            "Scene: an oceanfront destination wedding at golden hour, soft natural sunlight, "
+            "sea breeze, elegant beach wedding attire. Clean seaside backdrop, airy natural light. "
+            "Critical: keep their face exactly as it appears in the reference — same face shape, "
+            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
+            "the face; the person must remain clearly recognisable. "
+            "Full natural colour, no illustration, cartoon or painting style."
+        ),
+        "fal_prompt": (
+            "Photorealistic destination wedding portrait of this person on an oceanfront beach "
+            "at golden hour, soft natural sunlight, sea breeze, elegant beach wedding attire, "
+            "clean seaside backdrop, airy natural light, premium wedding photography, "
+            "natural colour"
+        ),
+    },
+    "traditional_indian": {
+        "name": "Traditional Indian",
+        "prompt": (
+            "Create a photorealistic traditional Indian wedding portrait of the person in the "
+            "reference photograph. Scene: a culturally appropriate Indian wedding — rich "
+            "traditional attire, detailed gold jewellery, intricate embroidery, ornate floral "
+            "décor and warm ceremonial lighting. "
+            "Critical: keep their face exactly as it appears in the reference — same face shape, "
+            "features, eyes, nose, mouth, skin tone and hair. Do not alter, beautify or stylise "
+            "the face; the person must remain clearly recognisable. "
+            "Full natural colour, no illustration, cartoon or painting style."
+        ),
+        "fal_prompt": (
+            "Photorealistic traditional Indian wedding portrait of this person, rich "
+            "traditional attire, detailed gold jewellery, intricate embroidery, ornate floral "
+            "décor, warm ceremonial lighting, premium wedding photography, natural colour"
+        ),
+    },
+}
+
+FAL_PROMPT_KEY = "fal_prompt"
+
+
+# --------------------------------------------------------------------------- #
+# Session storage (in-memory; images live in data/ and expire after 30 min)
+# --------------------------------------------------------------------------- #
+
+@dataclass
+class SceneJob:
+    status: str = "idle"  # idle | pending | generating | completed | failed
+    error: Optional[str] = None
+    file: Optional[str] = None
+    mime: str = "image/png"
+    version: int = 0
+
+
+@dataclass
+class Session:
+    id: str
+    created_at: datetime
+    consent: bool = False
+    reference_file: Optional[str] = None
+    reference_mime: Optional[str] = None
+    scenes: dict[str, SceneJob] = field(
+        default_factory=lambda: {key: SceneJob() for key in SCENES}
+    )
+
+
+sessions: dict[str, Session] = {}
+_tasks: set[asyncio.Task[None]] = set()
+
+_client: Optional[genai.Client] = None
+
+
+def _require_session(session_id: str) -> Session:
+    _purge_expired()
+    session = sessions.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found or expired.")
+    return session
+
+
+def _delete_session(session_id: str) -> None:
+    session = sessions.pop(session_id, None)
+    if session is None:
+        return
+    for job in session.scenes.values():
+        if job.file:
+            _quiet_delete(GENERATED_DIR / job.file)
+    if session.reference_file:
+        _quiet_delete(UPLOAD_DIR / session.reference_file)
+
+
+def _purge_expired() -> None:
+    now = datetime.now(timezone.utc)
+    for session_id, session in list(sessions.items()):
+        if now - session.created_at > SESSION_TTL:
+            _delete_session(session_id)
+
+
+def _quiet_delete(path: Path) -> None:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+# --------------------------------------------------------------------------- #
+# Image generation — provider chain (fal.ai FLUX PuLID, then Gemini)
+# --------------------------------------------------------------------------- #
+
+class GenerationError(RuntimeError):
+    pass
+
+
+def _get_client() -> genai.Client:
+    global _client
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        raise GenerationError(
+            "The backend has no GEMINI_API_KEY configured. Add it to .env and restart."
+        )
+    if _client is None:
+        _client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                timeout=60_000,
+                retry_options=types.HttpRetryOptions(attempts=1),
+            ),
+        )
+    return _client
+
+
+def _gemini_extract_classic(response: object) -> tuple[bytes, str]:
+    """Pull the first inline image out of a classic generate_content response."""
+    for candidate in getattr(response, "candidates", None) or []:
+        content = getattr(candidate, "content", None)
+        for part in getattr(content, "parts", None) or []:
+            inline = getattr(part, "inline_data", None)
+            data = getattr(inline, "data", None) if inline else None
+            if data:
+                return bytes(data), getattr(inline, "mime_type", None) or "image/png"
+
+    for generated in getattr(response, "generated_images", None) or []:
+        image = getattr(generated, "image", None)
+        data = getattr(image, "image_bytes", None) if image else None
+        if data:
+            mime = getattr(image, "mime_type", None) or "image/png"
+            return bytes(data), mime
+
+    raise GenerationError("The model did not return an image for this scene. Try again.")
+
+
+def _gemini_classic(
+    reference_bytes: bytes, mime: str, prompt: str, model_id: str
+) -> tuple[bytes, str]:
+    client = _get_client()
+    response = client.models.generate_content(
+        model=model_id,
+        contents=[
+            types.Part.from_bytes(data=reference_bytes, mime_type=mime),
+            prompt,
+        ],
+    )
+    return _gemini_extract_classic(response)
+
+
+def _gemini_interactions(
+    reference_bytes: bytes, mime: str, prompt: str, model_id: str
+) -> tuple[bytes, str]:
+    client = _get_client()
+    interaction = client.interactions.create(
+        model=model_id,
+        input=[
+            {"type": "text", "text": prompt},
+            {
+                "type": "image",
+                "data": base64.b64encode(reference_bytes).decode("ascii"),
+                "mime_type": mime,
+            },
+        ],
+        response_format={"type": "image", "aspect_ratio": "3:4", "image_size": "1K"},
+    )
+    image = getattr(interaction, "output_image", None)
+    data = getattr(image, "data", None) if image else None
+    if not data:
+        raise GenerationError("The model did not return an image for this scene. Try again.")
+    return base64.b64decode(data), getattr(image, "mime_type", None) or "image/png"
+
+
+def _gemini_surfaces() -> tuple[str, ...]:
+    """Surface order for the Gemini provider (classic is the reliable one here)."""
+    mode = os.getenv("GEMINI_IMAGE_API", "classic").strip().lower()
+    if mode == "interactions":
+        return ("interactions",)
+    if mode == "auto":
+        return ("classic", "interactions")
+    return ("classic",)
+
+
+def _generate_via_gemini(
+    reference_bytes: bytes, mime: str, prompt: str, model_id: str
+) -> tuple[bytes, str]:
+    surfaces = {"classic": _gemini_classic, "interactions": _gemini_interactions}
+    order = _gemini_surfaces()
+    for surface_name in order:
+        try:
+            return surfaces[surface_name](reference_bytes, mime, prompt, model_id)
+        except Exception as exc:  # noqa: BLE001 - retried / re-raised below
+            print(f"[generation] gemini/{surface_name} failed: {exc}", flush=True)
+            if surface_name == order[-1] or not _is_retryable(exc):
+                raise
+    raise GenerationError("The Gemini provider could not generate this scene.")
+
+
+def _fal_error_detail(exc: Exception) -> str:
+    """Best-effort readable message from a fal/httpx exception."""
+    response = getattr(exc, "response", None)
+    if response is not None:
+        try:
+            payload = response.json()
+            detail = payload.get("detail") if isinstance(payload, dict) else None
+            if isinstance(detail, list) and detail:
+                first = detail[0]
+                detail = first.get("msg") if isinstance(first, dict) else str(first)
+            if detail:
+                return f"{detail} (HTTP {response.status_code})"
+        except Exception:  # noqa: BLE001 - fall back to raw body below
+            pass
+        body = (response.text or "").strip()
+        if body:
+            return f"{body[:200]} (HTTP {response.status_code})"
+    return str(exc)
+
+
+def _generate_via_fal(
+    reference_bytes: bytes, mime: str, prompt: str, model_id: str
+) -> tuple[bytes, str]:
+    fal_key = os.getenv("FAL_KEY", "").strip()
+    if not fal_key:
+        raise GenerationError(
+            "The backend has no FAL_KEY configured. Add it to .env and restart "
+            "(get one at fal.ai/dashboard/keys)."
+        )
+    try:
+        import fal_client
+    except ImportError as exc:
+        raise GenerationError(
+            "The fal-client package is not installed on the backend. Run: pip install fal-client"
+        ) from exc
+
+    os.environ["FAL_KEY"] = fal_key
+    try:
+        reference_url = fal_client.upload(reference_bytes, mime)
+        result = fal_client.subscribe(
+            model_id,
+            arguments={
+                "reference_image_url": reference_url,
+                "prompt": prompt,
+                "image_size": "portrait_4_3",
+                "id_weight": FAL_ID_WEIGHT,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - normalised into a readable error
+        raise GenerationError(f"fal.ai request failed: {_fal_error_detail(exc)}") from exc
+
+    images = (result or {}).get("images") or []
+    image_url = images[0].get("url") if images and isinstance(images[0], dict) else None
+    if not image_url:
+        raise GenerationError("FLUX PuLID did not return an image for this scene. Try again.")
+
+    response = httpx.get(image_url, timeout=60, follow_redirects=True)
+    response.raise_for_status()
+    content_type = (response.headers.get("content-type") or "image/jpeg").split(";")[0].strip()
+    if not content_type.startswith("image/"):
+        content_type = "image/jpeg"
+    return response.content, content_type
+
+
+_PROVIDERS: dict[str, Callable[[bytes, str, str, str], tuple[bytes, str]]] = {
+    "fal": _generate_via_fal,
+    "gemini": _generate_via_gemini,
+}
+
+_PROVIDER_DEFAULT_MODELS = {
+    "fal": FAL_DEFAULT_MODEL,
+    "gemini": GEMINI_IMAGE_MODEL,
+}
+
+
+def _parse_model_specs() -> list[tuple[str, str]]:
+    """Parse IMAGE_MODEL_PRIMARY / IMAGE_MODEL_FALLBACK into an ordered chain."""
+    chain: list[tuple[str, str]] = []
+    for slot in (IMAGE_MODEL_PRIMARY, IMAGE_MODEL_FALLBACK):
+        for entry in slot.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            provider, _, model = entry.partition(":")
+            provider = provider.strip().lower()
+            model = model.strip()
+            if provider not in _PROVIDERS:
+                print(f"[config] unknown provider '{provider}' in '{entry}' — skipped", flush=True)
+                continue
+            chain.append((provider, model or _PROVIDER_DEFAULT_MODELS[provider]))
+    return chain
+
+
+MODEL_CHAIN: list[tuple[str, str]] = _parse_model_specs()
+
+
+def _provider_keys() -> dict[str, bool]:
+    return {
+        "fal": bool(os.getenv("FAL_KEY", "").strip()),
+        "gemini": bool(os.getenv("GEMINI_API_KEY", "").strip()),
+    }
+
+
+def _any_provider_key_configured() -> bool:
+    keys = _provider_keys()
+    return any(keys.get(provider, False) for provider, _ in MODEL_CHAIN)
+
+
+def _prompt_for(provider: str, scene_key: str) -> str:
+    scene = SCENES[scene_key]
+    if provider == "fal":
+        return scene.get(FAL_PROMPT_KEY, scene["prompt"])
+    return scene["prompt"]
+
+
+def _is_retryable(exc: Exception) -> bool:
+    text = str(exc).lower()
+    if "quota" in text or "api_key_invalid" in text or "api key not valid" in text:
+        return False
+    if "permission_denied" in text or "unauthenticated" in text or "unauthorized" in text:
+        return False
+    if "fal_key" in text or "fal-key" in text:
+        return False
+    if "exhausted balance" in text or "user is locked" in text:
+        return False
+    return True
+
+
+def _friendly_generation_error(exc: Exception) -> str:
+    if isinstance(exc, GenerationError):
+        return str(exc)  # already a user-facing message
+    text = str(exc)
+    lowered = text.lower()
+    if "exceeded your current quota" in lowered or "check your plan and billing" in lowered:
+        return (
+            "The Gemini API key has no remaining quota for image generation. "
+            "Check the key's plan and billing in Google AI Studio."
+        )
+    if "fal_key" in lowered:
+        return "The server's FAL_KEY was rejected. Check it on fal.ai and restart the backend."
+    if "unauthorized" in lowered or "invalid key" in lowered or "authentication" in lowered:
+        return "A provider API key was rejected. Check FAL_KEY / GEMINI_API_KEY and restart the backend."
+    if "exhausted balance" in lowered or "locked" in lowered:
+        return (
+            "The fal.ai account has no remaining balance. Top up at fal.ai/dashboard/billing "
+            "or switch the primary model to gemini."
+        )
+    if "api key" in lowered or "api_key" in lowered or "permission_denied" in lowered:
+        return "The server's Gemini API key was rejected. Check GEMINI_API_KEY and restart the backend."
+    if "resource_exhausted" in lowered or "rate" in lowered and "limit" in lowered or "429" in text:
+        return "The image service is rate limited right now. Wait a moment and retry."
+    if "safety" in lowered or "prohibited" in lowered or "blocked" in lowered:
+        return "The model could not generate this portrait (content filter). Try a different reference photograph."
+    if "timeout" in lowered or "timed out" in lowered:
+        return "Generation timed out. Retry this scene."
+    return f"Generation failed: {text[:220]}"
+
+
+def _generate_blocking(
+    reference_bytes: bytes, mime: str, scene_key: str
+) -> tuple[bytes, str]:
+    """Generate one portrait by walking the configured model chain."""
+    if not MODEL_CHAIN:
+        raise GenerationError(
+            "No image models are configured. Set IMAGE_MODEL_PRIMARY in .env and restart."
+        )
+
+    failures: list[tuple[str, Exception]] = []
+
+    for provider, model_id in MODEL_CHAIN:
+        prompt = _prompt_for(provider, scene_key)
+        for attempt in range(MAX_ATTEMPTS):
+            try:
+                return _PROVIDERS[provider](reference_bytes, mime, prompt, model_id)
+            except Exception as exc:  # noqa: BLE001 - re-raised / mapped below
+                print(
+                    f"[generation] {provider}:{model_id} attempt {attempt + 1} failed: {exc}",
+                    flush=True,
+                )
+                if attempt == 0:
+                    failures.append((f"{provider}:{model_id}", exc))
+                if not _is_retryable(exc):
+                    break  # move on to the next model in the chain
+                if attempt < MAX_ATTEMPTS - 1:
+                    time.sleep(2.0 * (attempt + 1))
+
+    if len(failures) == 1:
+        raise failures[0][1]
+
+    summary = " ".join(
+        f"[{name}] {_friendly_generation_error(exc)}" for name, exc in failures
+    )
+    raise GenerationError(f"All configured models failed. {summary}")
+
+
+async def _run_generation(session_id: str, scene_key: str) -> None:
+    session = sessions.get(session_id)
+    if session is None:
+        return
+    job = session.scenes[scene_key]
+    job.status = "generating"
+    job.error = None
+
+    reference_path = UPLOAD_DIR / session.reference_file  # type: ignore[arg-type]
+    try:
+        reference_bytes = await asyncio.to_thread(reference_path.read_bytes)
+        image_bytes, image_mime = await asyncio.wait_for(
+            asyncio.to_thread(
+                _generate_blocking,
+                reference_bytes,
+                session.reference_mime or "image/jpeg",
+                scene_key,
+            ),
+            timeout=GENERATION_TIMEOUT_SECONDS,
+        )
+
+        if sessions.get(session_id) is not session:
+            return  # session was reset while generating
+
+        extension = ALLOWED_MIME_TO_EXT.get(image_mime, "png")
+        filename = f"{session_id}_{scene_key}_{int(time.time())}.{extension}"
+        await asyncio.to_thread((GENERATED_DIR / filename).write_bytes, image_bytes)
+
+        old_file = job.file
+        job.file = filename
+        job.mime = image_mime
+        job.status = "completed"
+        job.version += 1
+        if old_file and old_file != filename:
+            _quiet_delete(GENERATED_DIR / old_file)
+    except Exception as exc:  # noqa: BLE001
+        job.status = "failed"
+        job.error = _friendly_generation_error(exc)
+
+
+# --------------------------------------------------------------------------- #
+# API
+# --------------------------------------------------------------------------- #
+
+app = FastAPI(title="Face Consistency Studio API", version="1.0.0")
+
+_default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+_cors_env = os.getenv("CORS_ORIGINS", "").strip()
+if _cors_env:
+    if _cors_env == "*":
+        _allowed_origins = ["*"]
+    else:
+        _allowed_origins = _default_origins + [
+            o.strip() for o in _cors_env.split(",") if o.strip()
+        ]
+else:
+    _allowed_origins = _default_origins
+
+_cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"https://.*\.onrender\.com")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allowed_origins,
+    allow_origin_regex=_cors_origin_regex if "*" not in _allowed_origins else None,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class GenerateRequest(BaseModel):
+    scenes: list[str]
+
+
+def _status_payload(session: Session) -> dict[str, object]:
+    scenes = {
+        key: {"status": job.status, "error": job.error, "version": job.version}
+        for key, job in session.scenes.items()
+    }
+    all_settled = all(
+        job.status in {"idle", "completed", "failed"} for job in session.scenes.values()
+    )
+    return {
+        "session_id": session.id,
+        "consent_confirmed": session.consent,
+        "has_reference": session.reference_file is not None,
+        "scenes": scenes,
+        "all_settled": all_settled,
+    }
+
+
+@app.get("/api/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/api/config")
+def config() -> dict[str, object]:
+    keys = _provider_keys()
+    chain_display = [f"{provider}:{model}" for provider, model in MODEL_CHAIN]
+    return {
+        "model": chain_display[0] if chain_display else None,
+        "fallback_models": chain_display[1:],
+        "model_chain": chain_display,
+        "gemini_key_configured": keys["gemini"],
+        "fal_key_configured": keys["fal"],
+        "api_key_configured": _any_provider_key_configured(),
+    }
+
+
+@app.post("/api/upload")
+async def upload_reference(file: UploadFile = File(...)) -> dict[str, object]:
+    _purge_expired()
+
+    mime = (file.content_type or "").lower()
+    if mime not in ALLOWED_MIME_TO_EXT:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Please upload a JPG, PNG or WebP photograph.",
+        )
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="The uploaded file is empty.")
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail="The photograph is larger than 10 MB. Please choose a smaller file.",
+        )
+
+    session = Session(id=uuid.uuid4().hex, created_at=datetime.now(timezone.utc))
+    extension = ALLOWED_MIME_TO_EXT[mime]
+    filename = f"{session.id}_reference.{extension}"
+    (UPLOAD_DIR / filename).write_bytes(content)
+    session.reference_file = filename
+    session.reference_mime = mime
+    sessions[session.id] = session
+
+    preview = base64.b64encode(content).decode("ascii")
+    return {
+        "session_id": session.id,
+        "preview": f"data:{mime};base64,{preview}",
+        "size": len(content),
+        "content_type": mime,
+    }
+
+
+@app.post("/api/sessions/{session_id}/consent")
+def confirm_consent(session_id: str) -> dict[str, str]:
+    session = _require_session(session_id)
+    session.consent = True
+    return {"status": "consent_confirmed"}
+
+
+@app.post("/api/sessions/{session_id}/generate")
+async def generate(session_id: str, payload: GenerateRequest) -> dict[str, object]:
+    session = _require_session(session_id)
+
+    if not session.consent:
+        raise HTTPException(status_code=400, detail="Consent must be confirmed before generating.")
+    if not session.reference_file:
+        raise HTTPException(status_code=400, detail="No reference photograph has been uploaded.")
+    if not _any_provider_key_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Generation is unavailable: no provider API key is configured. "
+                "Add FAL_KEY or GEMINI_API_KEY to the backend environment."
+            ),
+        )
+
+    requested = list(dict.fromkeys(payload.scenes))
+    unknown = [key for key in requested if key not in SCENES]
+    if not requested or unknown:
+        raise HTTPException(status_code=400, detail="Unknown wedding scene requested.")
+
+    started: list[str] = []
+    for key in requested:
+        job = session.scenes[key]
+        if job.status in {"pending", "generating"}:
+            continue
+        job.status = "pending"
+        job.error = None
+        task = asyncio.create_task(
+            _run_generation(session.id, key), name=f"session:{session.id}"
+        )
+        _tasks.add(task)
+        task.add_done_callback(_tasks.discard)
+        started.append(key)
+
+    return {"status": "started", "scenes": started}
+
+
+@app.get("/api/sessions/{session_id}/status")
+def status(session_id: str) -> dict[str, object]:
+    return _status_payload(_require_session(session_id))
+
+
+@app.get("/api/sessions/{session_id}/reference")
+def get_reference(session_id: str, download: bool = False) -> FileResponse:
+    session = _require_session(session_id)
+    if not session.reference_file:
+        raise HTTPException(status_code=404, detail="No reference photograph.")
+    path = UPLOAD_DIR / session.reference_file
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Reference photograph no longer available.")
+    headers = None
+    if download:
+        headers = {"Content-Disposition": f'attachment; filename="reference.{path.suffix.lstrip(".")}"'}
+    return FileResponse(path, media_type=session.reference_mime or "image/jpeg", headers=headers)
+
+
+@app.get("/api/sessions/{session_id}/portrait/{scene_key}")
+def get_portrait(
+    session_id: str, scene_key: str, download: bool = False
+) -> FileResponse:
+    session = _require_session(session_id)
+    if scene_key not in SCENES:
+        raise HTTPException(status_code=404, detail="Unknown scene.")
+    job = session.scenes[scene_key]
+    if job.status != "completed" or not job.file:
+        raise HTTPException(status_code=404, detail="This portrait has not been generated yet.")
+    path = GENERATED_DIR / job.file
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Portrait file no longer available.")
+    headers = None
+    if download:
+        headers = {
+            "Content-Disposition": f'attachment; filename="portrait-{scene_key}.{path.suffix.lstrip(".")}"'
+        }
+    return FileResponse(path, media_type=job.mime, headers=headers)
+
+
+@app.get("/api/sessions/{session_id}/download")
+def download_bundle(session_id: str) -> StreamingResponse:
+    session = _require_session(session_id)
+    completed = [
+        (key, job) for key, job in session.scenes.items() if job.status == "completed" and job.file
+    ]
+    if not completed:
+        raise HTTPException(status_code=404, detail="No completed portraits to download.")
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        if session.reference_file:
+            reference_path = UPLOAD_DIR / session.reference_file
+            if reference_path.exists():
+                archive.write(reference_path, f"reference.{reference_path.suffix.lstrip('.')}")
+        for key, job in completed:
+            path = GENERATED_DIR / job.file  # type: ignore[arg-type]
+            if path.exists():
+                archive.write(path, f"portrait-{key}.{path.suffix.lstrip('.')}")
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="face-consistency-portraits.zip"'},
+    )
+
+
+@app.post("/api/sessions/{session_id}/reset")
+def reset(session_id: str) -> dict[str, str]:
+    session = _require_session(session_id)
+    for task in list(_tasks):
+        if task.get_name() == f"scene:{session.id}":
+            task.cancel()
+    _delete_session(session.id)
+    return {"status": "reset"}
+
+
+# --------------------------------------------------------------------------- #
+# Serve the built frontend when present (single-origin deployment).
+# --------------------------------------------------------------------------- #
+
+DIST_DIR = Path(__file__).parent / "faceAi-client" / "dist"
+if DIST_DIR.exists():
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
+
+    @app.exception_handler(404)
+    async def not_found_handler(request, exc):
+        if not request.url.path.startswith("/api"):
+            index_path = DIST_DIR / "index.html"
+            if index_path.exists():
+                return FileResponse(index_path)
+        detail = getattr(exc, "detail", "Not Found")
+        return JSONResponse(status_code=404, content={"detail": detail})
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("backend:app", host="0.0.0.0", port=port)
+

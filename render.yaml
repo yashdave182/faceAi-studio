@@ -1,0 +1,48 @@
+# Render Blueprint Configuration: Deploy both Frontend and Backend
+services:
+  # --------------------------------------------------------------------------- #
+  # 1. FastAPI Backend (Web Service)
+  # --------------------------------------------------------------------------- #
+  - type: web
+    name: faceai-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.5
+      - key: IMAGE_MODEL_PRIMARY
+        value: fal:fal-ai/flux-pulid
+      - key: IMAGE_MODEL_FALLBACK
+        value: gemini:gemini-nano-banana-2.1
+      - key: FAL_ID_WEIGHT
+        value: "1"
+      # Required keys to set in Render dashboard:
+      - key: FAL_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+  # --------------------------------------------------------------------------- #
+  # 2. React + Vite Frontend (Static Site)
+  # --------------------------------------------------------------------------- #
+  - type: static
+    name: faceai-frontend
+    region: oregon
+    plan: free
+    buildCommand: cd faceAi-client && npm install && npm run build
+    staticPublishPath: faceAi-client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: faceai-backend
+          property: host

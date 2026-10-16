@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+google-genai
+fal-client
+httpx
+python-multipart
