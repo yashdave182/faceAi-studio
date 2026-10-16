@@ -3,7 +3,6 @@ import {
   bundleDownloadUrl,
   portraitDownloadUrl,
   portraitUrl,
-  referenceUrl,
 } from '../lib/api'
 import { SCENES, type AttireStyle, type SceneKey, type SceneState } from '../types'
 import { Lightbox } from './Lightbox'
@@ -12,7 +11,6 @@ interface Props {
   sessionId: string
   selected: SceneKey[]
   scenes: Record<string, SceneState>
-  previewUrl: string | null
   attire: AttireStyle
   onRegenerate: (key: SceneKey, attire?: AttireStyle) => void
   onRegenerateAll: (attire?: AttireStyle) => void
@@ -23,33 +21,25 @@ export function ResultsScreen({
   sessionId,
   selected,
   scenes,
-  previewUrl,
   attire,
   onRegenerate,
   onRegenerateAll,
   onStartOver,
 }: Props) {
-  const [lightbox, setLightbox] = useState<SceneKey | 'reference' | null>(null)
+  const [lightbox, setLightbox] = useState<SceneKey | null>(null)
 
   const activeScenes = SCENES.filter((scene) => selected.includes(scene.key))
   const completedCount = activeScenes.filter(
     (scene) => scenes[scene.key]?.status === 'completed',
   ).length
 
-  const lightboxContent =
-    lightbox === 'reference'
-      ? {
-          src: previewUrl ?? referenceUrl(sessionId),
-          caption: 'Reference photograph',
-          downloadUrl: referenceUrl(sessionId) + '&download=1',
-        }
-      : lightbox
-        ? {
-            src: portraitUrl(sessionId, lightbox, scenes[lightbox]?.version ?? 0),
-            caption: SCENES.find((s) => s.key === lightbox)?.name ?? '',
-            downloadUrl: portraitDownloadUrl(sessionId, lightbox),
-          }
-        : null
+  const lightboxContent = lightbox
+    ? {
+        src: portraitUrl(sessionId, lightbox, scenes[lightbox]?.version ?? 0),
+        caption: SCENES.find((s) => s.key === lightbox)?.name ?? '',
+        downloadUrl: portraitDownloadUrl(sessionId, lightbox),
+      }
+    : null
 
   return (
     <section className="fade-up mx-auto max-w-6xl px-6 pt-14 pb-24 sm:px-10">
@@ -78,25 +68,6 @@ export function ResultsScreen({
             </button>
           </div>
         </div>
-
-        {previewUrl && (
-          <button
-            type="button"
-            onClick={() => setLightbox('reference')}
-            className="group flex items-center gap-3 border border-beige bg-white/50 p-3 pr-5 text-left transition-colors hover:border-stone"
-          >
-            <img
-              src={previewUrl}
-              alt="Reference photograph used for all portraits"
-              className="h-14 w-14 object-cover"
-            />
-            <span className="text-xs leading-snug text-stone">
-              Reference
-              <br />
-              photograph
-            </span>
-          </button>
-        )}
       </div>
 
       <div className="mt-12 grid gap-8 md:grid-cols-3">

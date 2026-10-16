@@ -2,7 +2,6 @@ import { SCENES, type AttireStyle, type SceneKey } from '../types'
 import { SceneIllustration } from './SceneIllustration'
 
 interface Props {
-  previewUrl: string | null
   selected: SceneKey[]
   attire: AttireStyle
   onSelectAttire: (attire: AttireStyle) => void
@@ -13,7 +12,6 @@ interface Props {
 }
 
 export function SceneSelectScreen({
-  previewUrl,
   selected,
   attire,
   onSelectAttire,
@@ -24,20 +22,11 @@ export function SceneSelectScreen({
 }: Props) {
   return (
     <section className="fade-up mx-auto max-w-5xl px-6 pt-14 pb-24 sm:px-10">
-      <div className="flex flex-wrap items-center gap-6 border-b border-beige pb-8">
-        {previewUrl && (
-          <img
-            src={previewUrl}
-            alt="Your reference photograph"
-            className="h-20 w-20 border border-beige object-cover"
-          />
-        )}
-        <div>
-          <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step two · Choose your scenes</p>
-          <h1 className="mt-2 font-serif text-3xl font-medium text-charcoal sm:text-4xl">
-            Where should this Indian wedding story take place?
-          </h1>
-        </div>
+      <div className="border-b border-beige pb-8">
+        <p className="text-[11px] tracking-[0.28em] text-stone uppercase">Step two · Choose your scenes</p>
+        <h1 className="mt-2 font-serif text-3xl font-medium text-charcoal sm:text-4xl">
+          Where should this Indian wedding story take place?
+        </h1>
       </div>
 
       {/* Wedding Role & Attire Selection */}

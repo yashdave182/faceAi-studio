@@ -83,9 +83,10 @@ export function App() {
     if (settled && started) setStep('results')
   }, [step, selected, sceneStates])
 
-  function handleUploaded(newSessionId: string, newPreviewUrl: string) {
+  function handleUploaded(newSessionId: string, newPreviewUrl: string, newAttire: AttireStyle) {
     setSessionId(newSessionId)
     setPreviewUrl(newPreviewUrl)
+    setAttire(newAttire)
     setNotice(null)
     setStep('scenes')
   }
@@ -170,11 +171,12 @@ export function App() {
       )}
 
       <main className="flex-1">
-        {step === 'upload' && <UploadScreen onUploaded={handleUploaded} />}
+        {step === 'upload' && (
+          <UploadScreen initialAttire={attire} onUploaded={handleUploaded} />
+        )}
 
         {step === 'scenes' && (
           <SceneSelectScreen
-            previewUrl={previewUrl}
             selected={selected}
             attire={attire}
             onSelectAttire={setAttire}
@@ -199,7 +201,6 @@ export function App() {
             sessionId={sessionId}
             selected={selected}
             scenes={sceneStates}
-            previewUrl={previewUrl}
             attire={attire}
             onRegenerate={(key, newAttire) => void handleRegenerate([key], newAttire)}
             onRegenerateAll={(newAttire) => void handleRegenerateAll(newAttire)}

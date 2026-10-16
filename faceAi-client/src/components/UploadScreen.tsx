@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { confirmConsent, uploadReference } from '../lib/api'
+import type { AttireStyle } from '../types'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const MAX_BYTES = 10 * 1024 * 1024
 
 interface Props {
-  onUploaded: (sessionId: string, previewUrl: string) => void
+  initialAttire?: AttireStyle
+  onUploaded: (sessionId: string, previewUrl: string, attire: AttireStyle) => void
 }
 
-export function UploadScreen({ onUploaded }: Props) {
+export function UploadScreen({ initialAttire, onUploaded }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [attire, setAttire] = useState<AttireStyle>(initialAttire ?? 'groom')
   const [consent, setConsent] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -54,7 +57,7 @@ export function UploadScreen({ onUploaded }: Props) {
     try {
       const session = await uploadReference(file)
       await confirmConsent(session.session_id)
-      onUploaded(session.session_id, previewUrl!)
+      onUploaded(session.session_id, previewUrl!, attire)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The photograph could not be processed.')
       setBusy(false)
@@ -138,6 +141,71 @@ export function UploadScreen({ onUploaded }: Props) {
             {error}
           </p>
         )}
+
+        {/* Gender / Attire Selection */}
+        <div className="mt-8 border border-beige bg-white/70 p-6 sm:p-7">
+          <p className="text-[10px] tracking-[0.24em] text-stone uppercase">Required · Person In Photograph</p>
+          <h2 className="mt-1 font-serif text-2xl font-medium text-charcoal">
+            Is the person in this photograph Male or Female?
+          </h2>
+          <p className="mt-1 text-xs text-stone">
+            Select the gender so our AI generates authentic, tailored Indian groom or bridal wedding attire.
+          </p>
+
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setAttire('groom')}
+              className={`flex flex-col items-center justify-center gap-2.5 border p-5 text-center transition-all ${
+                attire === 'groom'
+                  ? 'border-olive bg-white ring-2 ring-olive/20'
+                  : 'border-beige bg-white/40 hover:border-stone'
+              }`}
+            >
+              <span className="text-3xl">🤵</span>
+              <div>
+                <p className="font-serif text-lg font-medium text-charcoal">Male (Groom)</p>
+                <p className="text-[11px] text-stone">Royal Sherwani, Safa & Bandhgala</p>
+              </div>
+              <span
+                className={`mt-1 inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase ${
+                  attire === 'groom' ? 'font-medium text-olive' : 'text-stone'
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${attire === 'groom' ? 'bg-olive' : 'bg-beige'}`}
+                />
+                {attire === 'groom' ? 'Selected' : 'Select Male'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAttire('bride')}
+              className={`flex flex-col items-center justify-center gap-2.5 border p-5 text-center transition-all ${
+                attire === 'bride'
+                  ? 'border-olive bg-white ring-2 ring-olive/20'
+                  : 'border-beige bg-white/40 hover:border-stone'
+              }`}
+            >
+              <span className="text-3xl">👰</span>
+              <div>
+                <p className="font-serif text-lg font-medium text-charcoal">Female (Bride)</p>
+                <p className="text-[11px] text-stone">Bridal Lehenga, Kundan & Dupatta</p>
+              </div>
+              <span
+                className={`mt-1 inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase ${
+                  attire === 'bride' ? 'font-medium text-olive' : 'text-stone'
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${attire === 'bride' ? 'bg-olive' : 'bg-beige'}`}
+                />
+                {attire === 'bride' ? 'Selected' : 'Select Female'}
+              </span>
+            </button>
+          </div>
+        </div>
 
         <div className="mt-10 border-t border-beige pt-8">
           <label className="flex cursor-pointer items-start gap-3">

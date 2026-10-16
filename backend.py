@@ -845,10 +845,6 @@ def download_bundle(session_id: str) -> StreamingResponse:
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        if session.reference_file:
-            reference_path = UPLOAD_DIR / session.reference_file
-            if reference_path.exists():
-                archive.write(reference_path, f"reference.{reference_path.suffix.lstrip('.')}")
         for key, job in completed:
             path = GENERATED_DIR / job.file  # type: ignore[arg-type]
             if path.exists():
