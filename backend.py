@@ -53,6 +53,7 @@ def _load_env_file() -> None:
 
 _load_env_file()
 
+GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-nano-banana-2.1").strip()
 FAL_ID_WEIGHT = min(float(os.getenv("FAL_ID_WEIGHT", "1.0")), 1.0)
 FAL_INFERENCE_STEPS = int(os.getenv("FAL_INFERENCE_STEPS", "28"))
 FAL_GUIDANCE_SCALE = float(os.getenv("FAL_GUIDANCE_SCALE", "4.0"))
